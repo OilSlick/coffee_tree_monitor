@@ -28,10 +28,14 @@
 //
  
 #include <Wire.h>
+const int SenorPowerPin = 11;         //Pin used to provide power to sensors
  
  
 void setup()
 {
+  //Power on sensors
+  pinMode(SenorPowerPin,OUTPUT);
+  digitalWrite(SenorPowerPin,HIGH);
   Wire.begin();
  
   Serial.begin(9600);
@@ -41,7 +45,7 @@ void setup()
  
  
 void loop()
-{
+{ 
   byte error, address;
   int nDevices;
  

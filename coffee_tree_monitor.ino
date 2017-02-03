@@ -1,7 +1,12 @@
-#include <Wire.h>
+#include <Wire.h>                     //Needed for I2C 
 #include <Adafruit_Sensor.h>
 #include <SPI.h>                      //Needed for SD card adapter
 #include <SD.h>                       //Needed for SD card adapter
+#include "LowPower.h"                 //Provides sleep/idle/powerdown functions
+
+#include <SoftwareSerial.h>
+#include "Adafruit_FONA.h"
+#include "Adafruit_IO_FONA.h"
 
 /* I2C addresses:
   0x29  TSL2561 Lux sensor
@@ -12,6 +17,7 @@
 
 const int chipSelect = 10;            //CS pin for SD card adapter
 const int SenorPowerPin = 11;         //Pin used to provide power to sensors
+const int KeyPin = 12;                //Key pin to turn off cell module (Pulse low for a few seconds to change from on to off)
 float PressureVal = 0;
 float TSL2561Val = 0;                 
 float TemperatureVal = 0;
@@ -28,22 +34,8 @@ Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
 #include "RTClib.h" 
 RTC_DS3231 rtc;
 
-//For Sharp eInk display
-//#include <Adafruit_GFX.h>
-#include <Adafruit_SharpMem.h>
-
-#define SCK 9
-#define MOSI 6
-#define SS 5
-
-Adafruit_SharpMem display(SCK, MOSI, SS);
-
-#define BLACK 0
-#define WHITE 1
-
 //For Lux sensor
 #include <Adafruit_TSL2561_U.h>
-   
 Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
 void setup(void) 
@@ -52,18 +44,19 @@ void setup(void)
   pinMode(SenorPowerPin,OUTPUT);
   digitalWrite(SenorPowerPin,HIGH);
   
-  Serial.begin(9600);
-  delay(1000);
+  Serial.begin(115200);
+  delay(2000);
 
-  //For SD card adapter
-  Serial.print("Initializing SD card...");
-  pinMode(SS, OUTPUT);
-   
-  if (!SD.begin(chipSelect)) {
-    Serial.println("SD card initialization failed!");
-    return;
-  }
-  Serial.println("SD card initialization done.");
+  //For cell module 
+  pinMode(KeyPin,OUTPUT);
+  digitalWrite(KeyPin,HIGH);
+  //Turn off cell module
+  Serial.println("turning off cell");
+  digitalWrite(KeyPin,LOW);       
+  delay(3000);
+  digitalWrite(KeyPin,HIGH);;
+  Serial.println("Cell module turned off");
+  
 
   //For BMP180
   Serial.println("Pressure Sensor Test"); Serial.println("");
@@ -72,7 +65,7 @@ void setup(void)
   if(!bmp.begin())
   {
     /* There was a problem detecting the BMP085 ... check your connections */
-    Serial.print("Ooops, no BMP085 detected ... Check your wiring or I2C ADDR!");
+    Serial.println("No BMP085 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
   
@@ -97,7 +90,7 @@ void setup(void)
   if(!tsl.begin())
   {
     /* There was a problem detecting the TSL2561 ... check your connections */
-    Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
+    Serial.print("No TSL2561 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
   
@@ -106,44 +99,68 @@ void setup(void)
   
   /* Setup the sensor gain and integration time */
   configureSensor();
-
-  //For eInk display
-  // start & clear the display
-  display.begin();
-  display.clearDisplay();
-  display.refresh();
   
+  //For SD card adapter
+  Serial.print("Initializing SD card..."); 
+  pinMode(SS, OUTPUT);
+   
+  if (!SD.begin(chipSelect)) {
+    Serial.println("SD card initialization failed!");
+    return;
+  }
+  else
+  {
+    Serial.println("SD card initialization done.");
+  }
+
+  DATALOG = SD.open("log.txt", FILE_WRITE);
+  // if the file opened okay, write to it:
+  if (DATALOG)
+  {
+    DATALOG.println("Date Time,Lux,Temp.C,Pressure.hPa");
+    DATALOG.close();
+  }
+  else 
+  {
+    // if the file didn't open, print an error:
+    Serial.println("error opening log file");
+  }
+
   /* We're ready to go! */
-  Serial.println("");
+  Serial.println("Beginning data collection");
 }
 
 void loop(void) 
 {  
   DateTime now = rtc.now();
  
-  if ( now.minute() == 0 )  //Update SHARP display every hour
+  if ( /*!Serial &&*/ now.second() <= 40 )  //Don't miss logging window at top of each minute
   {
-    ReadTSL2561();
-    ReadBMP180();
-    einkDisplay();
+    LowPower.idle(SLEEP_8S, ADC_OFF, TIMER4_OFF, TIMER3_OFF, TIMER1_OFF, 
+        TIMER0_OFF, SPI_OFF, USART1_OFF, TWI_OFF, USB_OFF);
   }
   if ( now.second() == 0 ) //Update log file every minute
-  {
+  { 
     DATALOG = SD.open("log.txt", FILE_WRITE);
     // if the file opened okay, write to it:
     if (DATALOG) 
     {
+      Serial.print(now.hour(), DEC);
+      Serial.print(":");
+      Serial.print(now.minute(), DEC);
+      Serial.print(":");
+      Serial.println(now.second(), DEC);
       SDTimeStamp(); 
       ReadTSL2561();
+      ReadBMP180();
+      DATALOG.println();
       DATALOG.close();     
     } 
     else 
     {
       // if the file didn't open, print an error:
-      Serial.println("error opening test.txt");
+      Serial.println("error opening log file");
     }
-    
-    ReadTSL2561();
   }
   delay(1000);
 }
@@ -157,43 +174,9 @@ void SDTimeStamp()
   DATALOG.print(now.month(), DEC);
   DATALOG.print("/");
   DATALOG.print(now.day(), DEC);
-  DATALOG.print(",");
+  DATALOG.print(" ");
   DATALOG.print(now.hour(), DEC);
   DATALOG.print(":");
   DATALOG.print(now.minute(), DEC);
-  DATALOG.print(":");
-  DATALOG.print(now.second(), DEC);
-  DATALOG.println(",");
-}
-
-void einkDisplay()
-{
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(BLACK);
-  display.setCursor(0,0);
-
-  display.println("Latest reading:");
-  DateTime now = rtc.now();
-  
-  display.print(now.year(), DEC);
-  display.print('/');
-  display.print(now.month(), DEC);
-  display.print('/');
-  display.print(now.day(), DEC);
-  display.println(' ');
-  display.print(now.hour(), DEC);
-  display.print(':');
-  display.print(now.minute(), DEC);
-  display.print(':');
-  display.print(now.second(), DEC);
-  display.println();
-  display.println();
-  display.print("Lux:   ");
-  display.println(TSL2561Val);
-  display.print("Pres:  ");
-  display.println(PressureVal);
-  display.print("Temp:  ");
-  display.println(TemperatureVal);
-  display.refresh();
+  DATALOG.print(",");
 }

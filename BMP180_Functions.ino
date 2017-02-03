@@ -36,7 +36,10 @@ void ReadBMP180()
     Serial.print("Temperature: ");
     Serial.print(temperature);
     Serial.println(" C");
-
+    DATALOG.print(TemperatureVal);
+    DATALOG.print(",");
+    DATALOG.print(PressureVal);
+    
     /* Then convert the atmospheric pressure, and SLP to altitude         */
     /* Update this next line with the current SLP for better results      */
     // float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
@@ -45,7 +48,7 @@ void ReadBMP180()
     Serial.print("Altitude:    "); 
     Serial.print(bmp.pressureToAltitude(seaLevelPressure,
                                         event.pressure)); 
-    Serial.println(" m");
+    Serial.println(" M");
     Serial.println("");
   }
   else

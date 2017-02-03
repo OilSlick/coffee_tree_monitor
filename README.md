@@ -35,4 +35,4 @@ Current components included in the circuit:
 * [x] Add lowpower/sleep routines
 * [ ] Power down sensors between data collection (this is causing problems with TSL2561)
 * [ ] Configure Fona routines for data upload
-* [ ] Add error checking and ~~reporting on display~~ logging to SD and possibly www
+* [ ] Add error checking and logging to SD, www, and via LED blink

@@ -7,11 +7,11 @@ Intended to compare the differences between two coffee trees; one shaded and one
 
 Collect and compare the following data from each tree:
 
-1. Amount of light reaching the top of the tree
+1. Amount of light at tree (still deciding where to measure this)
 2. Temperature at the sensor (presumably attached low on main stem)
 3. Soil moisture content 
 
-**As of January 26, 2017 this project is still being developed.** I am currently building and testing the circuit and all of the sensors. I don't have all of the sensors yet so the circuit is incomplete. 
+**As of February 3, 2017 this project is still being developed.** I am currently prototyping the circuit and all of the sensors, which I'm still researching and sourcing.  
 
 Current components included in the circuit:
 

@@ -40,7 +40,7 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
 void setup(void) 
 {
-  //Power on sensors
+  //Power on sensors early in loop
   pinMode(SenorPowerPin,OUTPUT);
   digitalWrite(SenorPowerPin,HIGH);
   
@@ -51,7 +51,7 @@ void setup(void)
   pinMode(KeyPin,OUTPUT);
   digitalWrite(KeyPin,HIGH);
   //Turn off cell module
-  Serial.println("turning off cell");
+  Serial.println("Turning off cell module");
   digitalWrite(KeyPin,LOW);       
   delay(3000);
   digitalWrite(KeyPin,HIGH);;
@@ -136,8 +136,15 @@ void loop(void)
  
   if ( /*!Serial &&*/ now.second() <= 40 )  //Don't miss logging window at top of each minute
   {
+    digitalWrite(SenorPowerPin,LOW);
     LowPower.idle(SLEEP_8S, ADC_OFF, TIMER4_OFF, TIMER3_OFF, TIMER1_OFF, 
         TIMER0_OFF, SPI_OFF, USART1_OFF, TWI_OFF, USB_OFF);
+    digitalWrite(SenorPowerPin,HIGH);
+    delay(500);             //Give TSL2561 sensor time to settle
+    tsl.begin();
+    configureSensor();
+    delay(500);             //Give TSL2561 sensor time to settle
+    
   }
   if ( now.second() == 0 ) //Update log file every minute
   { 

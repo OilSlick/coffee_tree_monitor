@@ -1,4 +1,4 @@
-# coffee_tree_monitor
+# Coffee Tree Monitor
 An Arduino-based sensor network to monitor environmental conditions of coffee trees.
 
 Intended to compare the differences between two coffee trees; one shaded and one unshaded. 

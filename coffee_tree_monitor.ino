@@ -18,6 +18,7 @@
 const int chipSelect = 10;            //CS pin for SD card adapter
 const int SenorPowerPin = 11;         //Pin used to provide power to sensors
 const int KeyPin = 12;                //Key pin to turn off cell module (Pulse low for a few seconds to change from on to off)
+const int ledPin = 13;                //On-board LED
 float PressureVal = 0;
 float TSL2561Val = 0;                 
 float TemperatureVal = 0;
@@ -50,14 +51,7 @@ void setup(void)
   //For cell module 
   pinMode(KeyPin,OUTPUT);
   digitalWrite(KeyPin,HIGH);
-  //Turn off cell module
-  Serial.println("Turning off cell module");
-  digitalWrite(KeyPin,LOW);       
-  delay(3000);
-  digitalWrite(KeyPin,HIGH);;
-  Serial.println("Cell module turned off");
   
-
   //For BMP180
   Serial.println("Pressure Sensor Test"); Serial.println("");
   
@@ -126,15 +120,35 @@ void setup(void)
     Serial.println("error opening log file");
   }
 
+/*  //Turn on cell module
+  Serial.println("Turning off cell module");
+  digitalWrite(KeyPin,LOW);       
+  delay(3000);
+  digitalWrite(KeyPin,HIGH);;
+  Serial.println("Cell module turned off");
+*/
   /* We're ready to go! */
   Serial.println("Beginning data collection");
+  //Blink LED to indicate setup complete
+  digitalWrite(ledPin,HIGH);
+  delay(100);
+  digitalWrite(ledPin,LOW);
+  delay(100);
+  digitalWrite(ledPin,HIGH);
+  delay(100);
+  digitalWrite(ledPin,LOW);
+  delay(100);
+  digitalWrite(ledPin,HIGH);
+  delay(100);
+  digitalWrite(ledPin,LOW);
+  delay(100);
 }
 
 void loop(void) 
 {  
   DateTime now = rtc.now();
  
-  if ( /*!Serial &&*/ now.second() <= 40 )  //Don't miss logging window at top of each minute
+  if ( now.second() <= 40 )  //Don't miss logging window at top of each minute
   {
     digitalWrite(SenorPowerPin,LOW);
     LowPower.idle(SLEEP_8S, ADC_OFF, TIMER4_OFF, TIMER3_OFF, TIMER1_OFF, 

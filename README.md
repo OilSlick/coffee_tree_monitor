@@ -23,7 +23,7 @@ Current components included in the circuit:
 6. <a target="blank" href="https://www.amazon.com/Panasonic-NCR18650B-3400mAh-Rechargeable-Battery-Green/dp/B00DHXY72O">NCR18650B Li-ion battery</a> (hoping with solar power I can instead use a smaller 2200mAh LiPo)
 
 ### Hardware To-Do
-* [ ] Add SD Card adapter
+* [x] Add SD Card adapter
 * [ ] Add soil sensor
 * [ ] Add solar panel
 * [ ] Add BLE for sensor network comms
@@ -31,8 +31,8 @@ Current components included in the circuit:
 * [ ] Evaluate battery life and consider LiPo to replace current battery
 
 ### Software To-Do
-* [ ] Configure for SD Card adapter
-* [ ] Add lowpower/sleep routines
-* [ ] Power down sensors between data collection
+* [x] Configure for SD Card adapter
+* [x] Add lowpower/sleep routines
+* [ ] Power down sensors between data collection (this is causing problems with TSL2561)
 * [ ] Configure Fona routines for data upload
-* [ ] Add error checking and reporting on display & web
+* [ ] Add error checking and ~~reporting on display~~ logging to SD and possibly www

@@ -127,7 +127,7 @@ void setup()
   else 
   {
     // if the file didn't open, print an error:
-    Serial.println("Error opening data log file");
+    Serial.println("Error opening error log file");
   }
 
   //For RTC (must occur late in the loop)

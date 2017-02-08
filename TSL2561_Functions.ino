@@ -46,15 +46,41 @@ void ReadTSL2561()
   if (event.light)
   {
     TSL2561Val = event.light;
-    Serial.print("Lux:         ");
-    Serial.println(event.light);
-    DATALOG.print(TSL2561Val);
-    DATALOG.print(",");
+    if ( TSL2561Val >= 17000 )
+    {
+      ERRORLOG = SD.open("error.txt", FILE_WRITE);
+      if (ERRORLOG)
+    {
+      SDTimeStamp(ERRORLOG);
+      ERRORLOG.println("TSL2561 Sensor Error: lux above sensor max threshold");
+      ERRORLOG.close();
+    }
+    }
   }
   else
   {
-    /* If event.light = 0 lux the sensor is probably saturated
-       and no reliable data could be generated! */
-    Serial.println("Sensor overload");
+    /* If event.light = 0 lux during sun-down, there is likely not enough light for the sensor to read */
+    TSL2561Val = 0;
   }  
 }
+
+void SerialWriteTSL2561()
+{
+  Serial.print("Lux:         ");
+  Serial.println(TSL2561Val);
+}
+
+void SDWriteTSL2561()
+{
+  DATALOG.print(TSL2561Val);
+  DATALOG.print(",");
+}
+
+void IOWriteTSL2561()
+{
+  if ( connERROR == 0 )
+    {
+      luxFeed->save(TSL2561Val);
+    }
+}
+

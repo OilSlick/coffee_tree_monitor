@@ -14,45 +14,57 @@ void displayBMP180SensorDetails(void)
   delay(500);
 }
 
-void ReadBMP180()
+void ReadBMP180( bool BMP180Error )
 {
   /* Baro sensor event */
   sensors_event_t event;
-  bmp.getEvent(&event);   //Baro sensor
+  bmp.getEvent(&event);   
 
-  /* Display the results (barometric pressure is measure in hPa) */
   if (event.pressure)
   {
     PressureVal = event.pressure;
-    /* Display atmospheric pressue in hPa */
-    Serial.print("Pressure:    ");
-    Serial.print(event.pressure);
-    Serial.println(" hPa");
-     
-    /* First we get the current temperature from the BMP085 */
     float temperature;
     bmp.getTemperature(&temperature);
-    TemperatureVal = temperature;
-    Serial.print("Temperature: ");
-    Serial.print(temperature);
-    Serial.println(" C");
-    DATALOG.print(TemperatureVal);
-    DATALOG.print(",");
-    DATALOG.print(PressureVal);
-    
-    /* Then convert the atmospheric pressure, and SLP to altitude         */
-    /* Update this next line with the current SLP for better results      */
-    // float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
-    float seaLevelPressure = 1014.2;
-
-    Serial.print("Altitude:    "); 
-    Serial.print(bmp.pressureToAltitude(seaLevelPressure,
-                                        event.pressure)); 
-    Serial.println(" M");
-    Serial.println("");
+    TemperatureVal = temperature; 
   }
   else
   {
-    Serial.println("Sensor error");
+    if ( Serial )
+    {
+      Serial.println("Sensor error");
+    }
+    ERRORLOG = SD.open("error.txt", FILE_WRITE);
+    if (ERRORLOG)
+    {
+      SDTimeStamp(ERRORLOG);
+      ERRORLOG.println("BMP180 Sensor Error");
+      ERRORLOG.close();
+    }
   }
+}
+
+void SerialWriteBMP180()
+{
+  Serial.print("Pressure:    ");
+  Serial.print(PressureVal);
+  Serial.println(" hPa");
+  Serial.print("Temperature: ");
+  Serial.print(TemperatureVal);
+  Serial.println(" C");
+}
+
+void SDWriteBMP180()
+{
+  DATALOG.print(TemperatureVal);
+  DATALOG.print(",");
+  DATALOG.print(PressureVal);
+}
+
+void IOWriteBMP180()
+{
+  if ( connERROR == 0 )   //If connection failed, don't try to write to Adafruit IO
+    {
+      tempFeed->save(TemperatureVal);
+      presFeed->save(PressureVal);
+    }
 }

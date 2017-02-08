@@ -37,7 +37,7 @@ void ReadBMP180( bool BMP180Error )
     if (ERRORLOG)
     {
       SDTimeStamp(ERRORLOG);
-      ERRORLOG.println("BMP180 Sensor Error");
+      ERRORLOG.println("BMP180 Sensor Error: Failure to initialize");
       ERRORLOG.close();
     }
   }

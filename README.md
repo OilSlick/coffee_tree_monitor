@@ -5,9 +5,9 @@ Intended to compare the differences between two types of microclimate for coffee
 
 ### Basic Unit Operation
 
-Collect and compare the following data from each tree:
+Collect the following data from each tree:
 
-1. Amount of light measured at the top of the tree canopy
+1. Amount of light, measured at the top of the tree's canopy
 2. Air temperature at the sensor (presumably attached low on main stem)
 3. Soil moisture content 
 

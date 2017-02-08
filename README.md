@@ -28,4 +28,7 @@ Current unit configurations and tests are being documented in the [wiki](https:/
 * [x] Add lowpower/sleep routines
 * [ ] Power down sensors between data collection (this is causing problems with TSL2561)
 * [ ] Configure Fona routines for data upload
-* [ ] Add error checking and logging to SD, www, and via LED blink
+* [ ] Add error handling and logging to SD, www, and via LED blink
+  * [ ] Add error on bmp.getTemperature
+  * [ ] Skip Adafruit IO conn attempt if wifi fails
+  * [ ] Fix failure to detect TSL2561 init fail

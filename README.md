@@ -19,7 +19,7 @@ Current unit configurations and tests are being documented in the [wiki](https:/
 * [x] Add SD Card adapter
 * [ ] Add soil sensor
 * [ ] Add solar panel (February 8, 2017: ordered and en route )
-* [ ] Determine method for posting data online
+* [x] Determine method for posting data online
 * [ ] Organize circuit for project/gang box
 * [ ] Evaluate battery life and consider physically smaller LiPo to replace current Li-ion battery
 
@@ -32,3 +32,4 @@ Current unit configurations and tests are being documented in the [wiki](https:/
   * [ ] Add error on bmp.getTemperature
   * [ ] Skip Adafruit IO conn attempt if wifi fails
   * [ ] Fix failure to detect TSL2561 init fail
+* [ ] Rotate log files

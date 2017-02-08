@@ -31,7 +31,7 @@ void ReadBMP180( bool BMP180Error )
   {
     if ( Serial )
     {
-      Serial.println("Sensor error");
+      Serial.println("BMP180 sensor error");
     }
     ERRORLOG = SD.open("error.txt", FILE_WRITE);
     if (ERRORLOG)

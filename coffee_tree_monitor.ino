@@ -66,7 +66,7 @@ void setup()
   if(!bmp.begin())
   {
     /* There was a problem detecting the BMP085 ... check your connections */
-    Serial.println("No BMP180 detected ... Check your wiring or I2C ADDR!");
+    Serial.println("No BMP180 detected ... Check your wiring or I2C address");
     BMP180Error = 1;
   }
   
@@ -81,7 +81,7 @@ void setup()
   if(!tsl.begin())
   {
     /* There was a problem detecting the TSL2561 ... check your connections */
-    Serial.println("No TSL2561 detected ... Check your wiring or I2C ADDR!");
+    Serial.println("No TSL2561 detected ... Check your wiring or I2C address");
     TSL2561Error = 1;
   }
   
@@ -96,12 +96,12 @@ void setup()
   pinMode(SS, OUTPUT);
    
   if (!SD.begin(chipSelect)) {
-    Serial.println("SD card initialization failed!");
+    Serial.println("SD card initialization failed");
     return;
   }
   else
   {
-    Serial.println("SD card initialization done.");
+    Serial.println("SD card initialization done");
   }
 
   DATALOG = SD.open("log.txt", FILE_WRITE);

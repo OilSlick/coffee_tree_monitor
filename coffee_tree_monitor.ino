@@ -166,7 +166,7 @@ void setup()
     ERRORLOG = SD.open("error.txt", FILE_WRITE);
     if (ERRORLOG)
     {
-      SDTimeStamp(ERRORLOG);
+      TimeStampSD(ERRORLOG);
       ERRORLOG.println("Adafruit IO connection failed");
       ERRORLOG.close();
     }
@@ -209,19 +209,19 @@ void loop()
       Serial.print(now.minute(), DEC);
       Serial.print(":");
       Serial.println(now.second(), DEC);
-      SerialWriteBMP180();
-      SerialWriteTSL2561();
+      WriteBMP180Serial();
+      WriteTSL2561Serial();
     }
       
     DATALOG = SD.open("log.txt", FILE_WRITE);
     // if the file opened okay, write to it:
     if (DATALOG) 
     {
-      SDTimeStamp(DATALOG); 
-      SDWriteTSL2561();
-      SDWriteBMP180();
-      IOWriteBMP180();
-      IOWriteTSL2561();
+      TimeStampSD(DATALOG); 
+      WriteTSL2561SD();
+      WriteBMP180SD();
+      WriteBMP180IO();
+      WriteTSL2561IO();
       DATALOG.println();
       DATALOG.close();     
     } 
@@ -234,7 +234,7 @@ void loop()
   delay(1000);
 }
 
-void SDTimeStamp(File LogFile)  //Requires the name of the logfile to be passed, i.e. SDTimeStamp(ERRORLOG);
+void TimeStampSD(File LogFile)  //Requires the name of the logfile to be passed, i.e. TimeStampSD(ERRORLOG);
 {
   DateTime now = rtc.now();
   

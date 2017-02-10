@@ -36,14 +36,14 @@ void ReadBMP180( bool BMP180Error )
     ERRORLOG = SD.open("error.txt", FILE_WRITE);
     if (ERRORLOG)
     {
-      SDTimeStamp(ERRORLOG);
+      TimeStampSD(ERRORLOG);
       ERRORLOG.println("BMP180 Sensor Error: Failure to initialize");
       ERRORLOG.close();
     }
   }
 }
 
-void SerialWriteBMP180()
+void WriteBMP180Serial()
 {
   Serial.print("Pressure:    ");
   Serial.print(PressureVal);
@@ -53,14 +53,14 @@ void SerialWriteBMP180()
   Serial.println(" C");
 }
 
-void SDWriteBMP180()
+void WriteBMP180SD()
 {
   DATALOG.print(TemperatureVal);
   DATALOG.print(",");
   DATALOG.print(PressureVal);
 }
 
-void IOWriteBMP180()
+void WriteBMP180IO()
 {
   if ( connERROR == 0 )   //If connection failed, don't try to write to Adafruit IO
     {

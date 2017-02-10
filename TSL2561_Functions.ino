@@ -51,7 +51,7 @@ void ReadTSL2561()
       ERRORLOG = SD.open("error.txt", FILE_WRITE);
       if (ERRORLOG)
     {
-      SDTimeStamp(ERRORLOG);
+      TimeStampSD(ERRORLOG);
       ERRORLOG.println("TSL2561 Sensor Error: lux above sensor max threshold");
       ERRORLOG.close();
     }
@@ -64,19 +64,19 @@ void ReadTSL2561()
   }  
 }
 
-void SerialWriteTSL2561()
+void WriteTSL2561Serial()
 {
   Serial.print("Lux:         ");
   Serial.println(TSL2561Val);
 }
 
-void SDWriteTSL2561()
+void WriteTSL2561SD()
 {
   DATALOG.print(TSL2561Val);
   DATALOG.print(",");
 }
 
-void IOWriteTSL2561()
+void WriteTSL2561IO()
 {
   if ( connERROR == 0 )
     {

@@ -78,9 +78,6 @@ void WriteTSL2561SD()
 
 void WriteTSL2561IO()
 {
-  if ( connERROR == 0 )
-    {
-      luxFeed->save(TSL2561Val);
-    }
+  luxFeed->save(TSL2561Val);
 }
 

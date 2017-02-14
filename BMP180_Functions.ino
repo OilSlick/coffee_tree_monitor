@@ -62,9 +62,6 @@ void WriteBMP180SD()
 
 void WriteBMP180IO()
 {
-  if ( connERROR == 0 )   //If connection failed, don't try to write to Adafruit IO
-    {
-      tempFeed->save(TemperatureVal);
-      presFeed->save(PressureVal);
-    }
+  tempFeed->save(TemperatureVal);
+  presFeed->save(PressureVal);
 }

@@ -66,6 +66,8 @@ void loop()
       if (address<16)
         Serial.print("0");
       Serial.print(address,HEX);
+      Serial.print(" ");
+      Serial.print(address);
       Serial.println("  !");
  
       nDevices++;

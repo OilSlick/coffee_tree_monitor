@@ -5,9 +5,9 @@
 #include "config.h"                   //Needed for Adafruit IO
 
 /* I2C addresses:
-  0x29  TSL2561 Lux sensor
-  0x68  RTC
-  0x77  BMP180 Baro sensor
+  0x29  (41) TSL2561 Lux sensor
+  0x68 (104) RTC
+  0x77 (119) BMP180 Baro sensor
 */
 
 //ESP8266 mac address: 5C:CF:7F:C6:7B:BF
@@ -16,14 +16,21 @@ String Statuses[] =  { "WL_IDLE_STATUS=0", "WL_NO_SSID_AVAIL=1", "WL_SCAN_COMPLE
 String TimeStamp = "";                //String to contain the timestamp for log files
 const int chipSelect = 15;            //CS pin for SD card adapter
 const int SenorPowerPin = 2;          //Pin used to provide power to sensors
-bool connERROR = 0;                   //Track connection failures
+const int TSL2561I2CAdd = 41;         //I2C address of TSL2561 (found using I2C sketch)
+const int BMP180I2CAdd = 119;         //I2C address of BMP180 (found using I2C sketch)
+bool IOconnERROR = 0;                 //Track connection failures
 bool debug = 0;                       //Enable debugging with "1"
+bool JustPrintRuntimeOnce = 0;        //Just give us one runtime reading
 float PressureVal = 0;                //Value returned by sensor
 float TSL2561Val = 0;                 //Value returned by sensor
 float TemperatureVal = 0;             //Value returned by sensor
 float AltitudeVal = 0;                //Value returned by sensor
 bool BMP180Error = 0;                 //Track sensor errors
 bool TSL2561Error = 0;                //Track sensor errors
+bool WiFiError = 0;                   //Track WiFi connection error
+byte I2Cerror;                        //Track I2C errors (when pinging individual addresses for up/down status)
+int StartLoopRuntime;                 //Track loop run time (enabled with "debug = 1;" above)
+int LoopRuntime;                      //Track loop run time (enabled with "debug = 1;" above)
 
 //For Adafruit IO
 AdafruitIO_Feed *luxFeed = io.feed("Lux");
@@ -56,48 +63,22 @@ void setup()
   if ( debug == 1)
   { 
     Serial.setDebugOutput(true);
+    if ( Serial )
+    {
+      Serial.print("Debug enabled");
+    }
   }
-  delay(2000);
-  
-  //For BMP180
-  Serial.println("Initilizing Pressure Sensor"); Serial.println("");
-  
-  /* Initialise the sensor */
-  if(!bmp.begin())
-  {
-    /* There was a problem detecting the BMP085 ... check your connections */
-    Serial.println("No BMP180 detected ... Check your wiring or I2C address");
-    BMP180Error = 1;
-  }
-  
-  /* Display some basic information on this sensor */
-  displayBMP180SensorDetails();
+  // delay(2000); //Don't remember why I needed this. February 10, 2017 10:28
 
-  //For TSL2561 sensor
-  
-  Serial.println("Initilizing Light Sensor"); Serial.println("");
-  
-  /* Initialise the sensor */
-  if(!tsl.begin())
-  {
-    /* There was a problem detecting the TSL2561 ... check your connections */
-    Serial.println("No TSL2561 detected ... Check your wiring or I2C address");
-    TSL2561Error = 1;
-  }
-  
-  /* Display some basic information on this sensor */
-  displayTSL2561SensorDetails();
-  
-  /* Setup the sensor gain and integration time */
-  configureSensor();
-  
+  Wire.begin();
+
   //For SD card adapter
   Serial.print("Initializing SD card..."); 
   pinMode(SS, OUTPUT);
    
   if (!SD.begin(chipSelect)) {
     Serial.println("SD card initialization failed");
-    return;
+    //return;  //Need to better handle this error
   }
   else
   {
@@ -113,8 +94,11 @@ void setup()
   }
   else 
   {
-    // if the file didn't open, print an error:
-    Serial.println("Error opening data log file");
+    // if the file didn't open, print an error to serial:
+    if (Serial) 
+    {
+      Serial.println("Error opening data log file");
+    }
   }
 
   ERRORLOG = SD.open("error.txt", FILE_WRITE);
@@ -127,71 +111,166 @@ void setup()
   else 
   {
     // if the file didn't open, print an error:
-    Serial.println("Error opening error log file");
-  }
-
-  //For RTC (must occur late in the loop)
-  //Uncomment the line below to set the RTC
-  if ( Serial )
-  {
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
-
-  //For Adafruit IO
-  Connect();  //Connect to WiFi first
-  
-  Serial.println("Connecting to Adafruit IO");
-  // connect to io.adafruit.com
-  // io.connect();
-  // attach message handler for the each feed
-  luxFeed->onMessage(handleMessage);
-  tempFeed->onMessage(handleMessage);
-  presFeed->onMessage(handleMessage);
-  
-  // wait for a connection
-  int connAttempt = 0;
-  while(io.status() < AIO_CONNECTED && connAttempt <= 60) 
+    if (Serial)
     {
-      Serial.print(".");
-      delay(500);
-      connAttempt++;
+      Serial.println("Error opening error log file");
     }
-  if ( connAttempt > 60 )
+  }
+  
+  //For BMP180
+  if (Serial)
   {
-    connERROR = 1;
-    Serial.println("");
-    Serial.println("Aborting connection attempt to Adafruit IO");
-    Serial.print("IP address:   ");
-    Serial.println(WiFi.localIP());
+    Serial.println("Initilizing Pressure Sensor"); Serial.println("");
+  }
+  
+  /* Initialise the sensor */
+  
+  if(!bmp.begin())
+  {
+    /* There was a problem detecting the BMP085 ... check your connections */
+    if (Serial)
+    {
+      Serial.println("No BMP180 detected ... Check your wiring or I2C address");
+    }
+    BMP180Error = 1;
+  }
+  
+  /* Display some basic information on this sensor */
+  displayBMP180SensorDetails();
+
+  //For TSL2561 sensor
+  
+  if (Serial)
+  {
+    Serial.println("Initilizing Light Sensor"); Serial.println("");
+  }
+  
+  /* Initialise the sensor */
+
+  Wire.beginTransmission(TSL2561I2CAdd);
+  I2Cerror = Wire.endTransmission();
+  if (Serial)
+  {
+    Serial.print("Error: ");
+    Serial.println(I2Cerror);
+  }
+  if ( I2Cerror != 0 )  //Error "0" indicates a successful contact
+  {
+    if (Serial)
+    {
+      Serial.print("TSL2561 is not responding at address: ");
+      Serial.print(TSL2561I2CAdd);
+      Serial.print("("); Serial.print(TSL2561I2CAdd, HEX); Serial.println(")");
+    }
+
     ERRORLOG = SD.open("error.txt", FILE_WRITE);
     if (ERRORLOG)
     {
       TimeStampSD(ERRORLOG);
-      ERRORLOG.println("Adafruit IO connection failed");
+      ERRORLOG.print("TSL2561 is not responding at address: ");
+      ERRORLOG.print(TSL2561I2CAdd);
+      ERRORLOG.print("("); Serial.print(TSL2561I2CAdd, HEX); Serial.println(")");
       ERRORLOG.close();
+      TSL2561Error = 1;
     }
   }
-    connAttempt = 0;
+  
+  if(!tsl.begin())
+  {
+    /* There was a problem detecting the TSL2561 ... check your connections */
+    if (Serial)
+    {
+      Serial.println("No TSL2561 detected ... Check your wiring or I2C address");
+    }
+    TSL2561Error = 1;
+  }
+  
+  /* Display some basic information on this sensor */
+  displayTSL2561SensorDetails();
+  
+  /* Setup the sensor gain and integration time */
+  configureSensor();
+  
+  //For RTC (must occur late in the loop)
+  //Uncomment the line below to set the RTC
+  if ( Serial )
+  {
+   Serial.println("Setting time and date");
+   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
 
-  // we are connected
-  Serial.println();
-  Serial.println(io.statusText());
+  //Connect to WiFi
+  Connect();  
 
-  /* We're ready to go! */
-  Serial.println("Beginning data collection");
+  //Connect to Adafruit IO
+  if ( WiFiError == 0)
+  {
+    Serial.println("Connecting to Adafruit IO");
+    // connect to io.adafruit.com
+    // io.connect();
+    // attach message handler for the each feed
+    luxFeed->onMessage(handleMessage);
+    tempFeed->onMessage(handleMessage);
+    presFeed->onMessage(handleMessage);
+  
+    // wait for a connection
+    int IOconnAttempt = 0;
+    while(io.status() < AIO_CONNECTED && IOconnAttempt <= 60) 
+    {
+      Serial.print(".");
+      delay(500);
+      IOconnAttempt++;
+    }
+    if ( IOconnAttempt > 60 )
+    {
+      IOconnERROR = 1;
+      if ( Serial )
+      {
+        Serial.println("");
+        Serial.println("Aborting connection attempt to Adafruit IO");
+        Serial.print("IP address:   ");
+        Serial.println(WiFi.localIP());
+      }
+      ERRORLOG = SD.open("error.txt", FILE_WRITE);
+      if (ERRORLOG)
+      {
+        TimeStampSD(ERRORLOG);
+      ERRORLOG.println("Adafruit IO connection failed");
+      ERRORLOG.close();
+      }
+    }
+    IOconnAttempt = 0;
+
+      // we are connected
+      if ( Serial );
+      {
+        Serial.println();
+        Serial.println(io.statusText());
+      }
+  }
+  if ( Serial );
+  {
+    /* We're ready to go! */
+    Serial.println("Beginning data collection");
+    }
 }
 
 void loop() 
 {
+  if ( debug == 1);
+  {
+    StartLoopRuntime = millis();
+  }
+  
   // io.run(); keeps the client connected to
   // io.adafruit.com, and processes any incoming data.
-  if ( connERROR == 0 )
+  if ( WiFiError == 0 && IOconnERROR == 0 )
     {
       io.run();
     }
-  
+      
   DateTime now = rtc.now();
-   
+
   if ( now.second() == 0 ) //Update SD log file every minute
   { 
     if ( BMP180Error == 0 )
@@ -220,8 +299,6 @@ void loop()
       TimeStampSD(DATALOG); 
       WriteTSL2561SD();
       WriteBMP180SD();
-      WriteBMP180IO();
-      WriteTSL2561IO();
       DATALOG.println();
       DATALOG.close();     
     } 
@@ -230,8 +307,31 @@ void loop()
       // if the file didn't open, print an error:
       Serial.println("error opening log file");
     }
+    if (WiFiError == 0 && IOconnERROR == 0 )
+    {
+      WriteBMP180IO();
+      WriteTSL2561IO();
+    }
+    else 
+    {
+      Serial.println("Not attempting write to Adafruit IO (IOConnERROR = 1)");
+    }
   }
-  delay(1000);
+  //delay(1000);  //I'm not sure why I need this February 10, 2017 10:55
+
+  if ( debug == 1)
+  {
+    if ( now.second() == 0 || now.second() == 30 && JustPrintRuntimeOnce == 0 )
+    {
+      LoopRuntime = (millis() - StartLoopRuntime);
+      Serial.print("Loop runtime: "); Serial.print(LoopRuntime); Serial.println(" ms");
+      JustPrintRuntimeOnce = 1;
+    }
+    else 
+    {
+      JustPrintRuntimeOnce == 0;
+    }
+  }
 }
 
 void TimeStampSD(File LogFile)  //Requires the name of the logfile to be passed, i.e. TimeStampSD(ERRORLOG);
@@ -252,8 +352,13 @@ void TimeStampSD(File LogFile)  //Requires the name of the logfile to be passed,
 
 void Connect()
 {
-  Serial.print("Connecting to ");
-  Serial.println(WIFI_SSID);
+  if ( WiFiError == 0 )
+  {
+  if (Serial)
+  {
+    Serial.print("Connecting to ");
+    Serial.println(WIFI_SSID);
+  }
   
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -266,8 +371,20 @@ void Connect()
       Serial.print(".");
       if (Attempt == 60)
       {
-        Serial.println();
-        Serial.println("Could not connect to WiFi");
+        if (Serial)
+        {
+          Serial.println();
+          Serial.println("WiFi connection failed");
+          }
+        ERRORLOG = SD.open("error.txt", FILE_WRITE);
+        if (ERRORLOG)
+        {
+          TimeStampSD(ERRORLOG);
+          ERRORLOG.println("WiFi connection failed");
+          ERRORLOG.close();
+        }
+        WiFiError = 1;
+        IOconnERROR = 1; //If no WiFi connection, prevent connection to Adafruit IO
         return;
        }
     }
@@ -276,5 +393,6 @@ void Connect()
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  }
 }
 

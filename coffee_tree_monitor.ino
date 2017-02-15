@@ -169,7 +169,7 @@ void setup()
       TimeStampSD(ERRORLOG);
       ERRORLOG.print("TSL2561 is not responding at address: ");
       ERRORLOG.print(TSL2561I2CAdd);
-      ERRORLOG.print("("); Serial.print(TSL2561I2CAdd, HEX); Serial.println(")");
+      ERRORLOG.print("("); ERRORLOG.print(TSL2561I2CAdd, HEX); ERRORLOG.println(")");
       ERRORLOG.close();
       TSL2561Error = 1;
     }

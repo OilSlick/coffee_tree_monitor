@@ -31,11 +31,13 @@ bool WiFiError = 0;                   //Track WiFi connection error
 byte I2Cerror;                        //Track I2C errors (when pinging individual addresses for up/down status)
 int StartLoopRuntime;                 //Track loop run time (enabled with "debug = 1;" above)
 int LoopRuntime;                      //Track loop run time (enabled with "debug = 1;" above)
+bool InitialErrorReport = 0;          //Upload any sensor errors on first Loop run. 0 = hasn't run yet
 
 //For Adafruit IO
 AdafruitIO_Feed *luxFeed = io.feed("Lux");
 AdafruitIO_Feed *tempFeed = io.feed("Temp");
 AdafruitIO_Feed *presFeed = io.feed("Pressure");
+AdafruitIO_Feed *errorFeed = io.feed("Error");
 
 //For SD card adapter
 File DATALOG;
@@ -160,7 +162,7 @@ void setup()
     {
       Serial.print("TSL2561 is not responding at address: ");
       Serial.print(TSL2561I2CAdd);
-      Serial.print("("); Serial.print(TSL2561I2CAdd, HEX); Serial.println(")");
+      Serial.print(" ("); Serial.print(TSL2561I2CAdd, HEX); Serial.println(")");
     }
 
     ERRORLOG = SD.open("error.txt", FILE_WRITE);
@@ -212,6 +214,7 @@ void setup()
     luxFeed->onMessage(handleMessage);
     tempFeed->onMessage(handleMessage);
     presFeed->onMessage(handleMessage);
+    errorFeed->onMessage(handleMessage);
   
     // wait for a connection
     int IOconnAttempt = 0;
@@ -268,9 +271,22 @@ void loop()
     {
       io.run();
     }
-      
-  DateTime now = rtc.now();
 
+  if ( IOconnERROR == 0 && InitialErrorReport == 0 )
+    {
+      if ( BMP180Error == 1 )
+      {
+        errorFeed->save("BMP180 is not responding");
+      }
+      if ( TSL2561Error == 1 )
+      {
+        errorFeed->save("TSL2561 is not responding");
+      }
+      InitialErrorReport = 1;   //Only upload errors after unit resets
+    }
+
+  DateTime now = rtc.now();
+  
   if ( now.second() == 0 ) //Update SD log file every minute
   { 
     if ( BMP180Error == 0 )

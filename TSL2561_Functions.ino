@@ -48,7 +48,7 @@ void ReadTSL2561()
     TSL2561Val = event.light;
     if ( TSL2561Val >= 17000 )
     {
-      errorFeed->save("TSL2561 Sensor Error: lux above sensor max threshold");  //Log error to Adafruit IO
+      errorFeed->save("TSL2561 sensor saturated");  //Log error to Adafruit IO
       ERRORLOG = SD.open("error.txt", FILE_WRITE);
       if (ERRORLOG)
     {

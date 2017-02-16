@@ -291,7 +291,7 @@ void loop()
   { 
     if ( BMP180Error == 0 )
     {
-      ReadBMP180( BMP180Error );
+      ReadBMP180();
     }
     if ( TSL2561Error == 0 )
     {

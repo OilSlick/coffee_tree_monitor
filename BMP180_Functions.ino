@@ -14,7 +14,7 @@ void displayBMP180SensorDetails(void)
   delay(500);
 }
 
-void ReadBMP180( bool BMP180Error )
+void ReadBMP180()
 {
   /* Baro sensor event */
   sensors_event_t event;

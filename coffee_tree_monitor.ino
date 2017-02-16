@@ -197,8 +197,7 @@ void setup()
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   Serial.println("Setting time and date");
-   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi
@@ -238,8 +237,8 @@ void setup()
       if (ERRORLOG)
       {
         TimeStampSD(ERRORLOG);
-      ERRORLOG.println("Adafruit IO connection failed");
-      ERRORLOG.close();
+        ERRORLOG.println("Adafruit IO connection failed");
+        ERRORLOG.close();
       }
     }
     IOconnAttempt = 0;
@@ -250,6 +249,13 @@ void setup()
         Serial.println();
         Serial.println(io.statusText());
       }
+  }
+  if ( IOconnERROR == 0 && WiFiError == 0 && TSL2561Error == 0 && BMP180Error == 0 )
+  {
+    TimeStampSD(ERRORLOG);
+    ERRORLOG.println("REBOOT: Sensors initialized and Internet connectivity good");
+    ERRORLOG.close();
+    errorFeed->save("REBOOT: Sensors OK");
   }
   if ( Serial );
   {
@@ -276,11 +282,11 @@ void loop()
     {
       if ( BMP180Error == 1 )
       {
-        errorFeed->save("BMP180 is not responding");
+        errorFeed->save("REBOOT: BMP180 is not responding");
       }
       if ( TSL2561Error == 1 )
       {
-        errorFeed->save("TSL2561 is not responding");
+        errorFeed->save("REBOOT: TSL2561 is not responding");
       }
       InitialErrorReport = 1;   //Only upload errors after unit resets
     }
@@ -331,15 +337,23 @@ void loop()
     }
     if (WiFiError == 0 && IOconnERROR == 0 )
     {
-      WriteBMP180IO();
-      WriteTSL2561IO();
+      if ( BMP180Error == 0 )
+      {
+        WriteBMP180IO();
+      }
+      if ( TSL2561Error == 0 )
+      {
+        WriteTSL2561IO();
+      }
     }
     else 
     {
-      Serial.println("Not attempting write to Adafruit IO (IOConnERROR = 1)");
+      if ( Serial )
+      {
+        Serial.println("Not attempting write to Adafruit IO (IOConnERROR = 1)");
+      }
     }
   }
-  //delay(1000);  //I'm not sure why I need this February 10, 2017 10:55
 
   if ( debug == 1)
   {

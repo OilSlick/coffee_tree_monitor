@@ -255,7 +255,7 @@ void setup()
   if ( IOconnERROR == 0 && WiFiError == 0 && TSL2561Error == 0 && BMP180Error == 0 && SDError == 0 )
   {
     TimeStampSD(ERRORLOG);
-    ERRORLOG.println("REBOOT: Sensors initialized and Internet connectivity good");
+    ERRORLOG.println("REBOOT: OK");
     ERRORLOG.close();
     errorFeed->save("REBOOT: OK");
   }
@@ -284,15 +284,15 @@ void loop()
     {
       if ( BMP180Error == 1 )
       {
-        errorFeed->save("REBOOT: BMP180 not responding");
+        errorFeed->save("REBOOT: BMP180 error");
       }
       if ( TSL2561Error == 1 )
       {
-        errorFeed->save("REBOOT: TSL2561 not responding");
+        errorFeed->save("REBOOT: TSL2561 error");
       }
       if ( SDError == 1 )
       {
-        errorFeed->save("REBOOT: SD dapter not responding");
+        errorFeed->save("REBOOT: SD card error");
       }
       InitialErrorReport = 1;   //Only upload errors after unit resets
     }

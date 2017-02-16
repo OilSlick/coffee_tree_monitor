@@ -313,8 +313,14 @@ void loop()
     if (DATALOG) 
     {
       TimeStampSD(DATALOG); 
-      WriteTSL2561SD();
-      WriteBMP180SD();
+      if ( BMP180Error == 0 )
+      {
+        WriteBMP180SD();
+      }
+      if ( TSL2561Error == 0 )
+      {
+        WriteTSL2561SD();
+      }
       DATALOG.println();
       DATALOG.close();     
     } 

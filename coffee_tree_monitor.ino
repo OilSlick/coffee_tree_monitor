@@ -27,6 +27,7 @@ float TemperatureVal = 0;             //Value returned by sensor
 float AltitudeVal = 0;                //Value returned by sensor
 bool BMP180Error = 0;                 //Track sensor errors
 bool TSL2561Error = 0;                //Track sensor errors
+bool SDError = 0;                     //Track SD adapter errors
 bool WiFiError = 0;                   //Track WiFi connection error
 byte I2Cerror;                        //Track I2C errors (when pinging individual addresses for up/down status)
 int StartLoopRuntime;                 //Track loop run time (enabled with "debug = 1;" above)
@@ -80,6 +81,7 @@ void setup()
    
   if (!SD.begin(chipSelect)) {
     Serial.println("SD card initialization failed");
+    SDError = 1;
     //return;  //Need to better handle this error
   }
   else
@@ -171,7 +173,7 @@ void setup()
       TimeStampSD(ERRORLOG);
       ERRORLOG.print("TSL2561 is not responding at address: ");
       ERRORLOG.print(TSL2561I2CAdd);
-      ERRORLOG.print("("); ERRORLOG.print(TSL2561I2CAdd, HEX); ERRORLOG.println(")");
+      ERRORLOG.print("(0x"); ERRORLOG.print(TSL2561I2CAdd, HEX); ERRORLOG.println(")");
       ERRORLOG.close();
       TSL2561Error = 1;
     }
@@ -197,7 +199,7 @@ void setup()
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi
@@ -250,12 +252,12 @@ void setup()
         Serial.println(io.statusText());
       }
   }
-  if ( IOconnERROR == 0 && WiFiError == 0 && TSL2561Error == 0 && BMP180Error == 0 )
+  if ( IOconnERROR == 0 && WiFiError == 0 && TSL2561Error == 0 && BMP180Error == 0 && SDError == 0 )
   {
     TimeStampSD(ERRORLOG);
     ERRORLOG.println("REBOOT: Sensors initialized and Internet connectivity good");
     ERRORLOG.close();
-    errorFeed->save("REBOOT: Sensors OK");
+    errorFeed->save("REBOOT: OK");
   }
   if ( Serial );
   {
@@ -282,11 +284,15 @@ void loop()
     {
       if ( BMP180Error == 1 )
       {
-        errorFeed->save("REBOOT: BMP180 is not responding");
+        errorFeed->save("REBOOT: BMP180 not responding");
       }
       if ( TSL2561Error == 1 )
       {
-        errorFeed->save("REBOOT: TSL2561 is not responding");
+        errorFeed->save("REBOOT: TSL2561 not responding");
+      }
+      if ( SDError == 1 )
+      {
+        errorFeed->save("REBOOT: SD dapter not responding");
       }
       InitialErrorReport = 1;   //Only upload errors after unit resets
     }

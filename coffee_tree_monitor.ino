@@ -5,9 +5,9 @@
 #include "config.h"                   //Needed for Adafruit IO
 
 /* I2C addresses:
-  0x29  (41) TSL2561 Lux sensor
-  0x68 (104) RTC
-  0x77 (119) BMP180 Baro sensor
+*  0x29  (41) TSL2561 Lux sensor
+*  0x68 (104) RTC
+*  0x77 (119) BMP180 Baro sensor
 */
 
 //ESP8266 mac address: 5C:CF:7F:C6:7B:BF
@@ -58,6 +58,8 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
 void setup() 
 {
+  wdt_enable(WDTO_4S);  //Configure watchdog timer
+
   //Power on sensors early in loop
   pinMode(SenorPowerPin,OUTPUT);
   digitalWrite(SenorPowerPin,HIGH);
@@ -203,6 +205,7 @@ void setup()
   }
 
   //Connect to WiFi
+  wdt_reset();
   Connect();  
 
   //Connect to Adafruit IO
@@ -345,10 +348,12 @@ void loop()
     {
       if ( BMP180Error == 0 )
       {
+        wdt_reset();
         WriteBMP180IO();
       }
       if ( TSL2561Error == 0 )
       {
+        wdt_reset();
         WriteTSL2561IO();
       }
     }

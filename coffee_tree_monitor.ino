@@ -32,7 +32,6 @@ bool WiFiError = 0;                   //Track WiFi connection error
 byte I2Cerror;                        //Track I2C errors (when pinging individual addresses for up/down status)
 int StartLoopRuntime;                 //Track loop run time (enabled with "debug = 1;" above)
 int LoopRuntime;                      //Track loop run time (enabled with "debug = 1;" above)
-bool InitialErrorReport = 0;          //Upload any sensor errors on first Loop run. 0 = hasn't run yet
 
 //For Adafruit IO
 AdafruitIO_Feed *luxFeed = io.feed("Lux");
@@ -58,7 +57,9 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
 void setup() 
 {
-  wdt_enable(WDTO_4S);  //Configure watchdog timer
+  wdt_enable(WDTO_4S);  //Configure watchdog timer with 4-second timeout
+
+  rtc.begin();
 
   //Power on sensors early in loop
   pinMode(SenorPowerPin,OUTPUT);
@@ -215,6 +216,7 @@ void setup()
     // connect to io.adafruit.com
     // io.connect();
     // attach message handler for the each feed
+    wdt_reset();
     luxFeed->onMessage(handleMessage);
     tempFeed->onMessage(handleMessage);
     presFeed->onMessage(handleMessage);
@@ -257,11 +259,29 @@ void setup()
   }
   if ( IOconnERROR == 0 && WiFiError == 0 && TSL2561Error == 0 && BMP180Error == 0 && SDError == 0 )
   {
+    ERRORLOG = SD.open("error.txt", FILE_WRITE);
     TimeStampSD(ERRORLOG);
     ERRORLOG.println("REBOOT: OK");
     ERRORLOG.close();
     errorFeed->save("REBOOT: OK");
   }
+
+  if ( IOconnERROR == 0 )
+    {
+      if ( BMP180Error == 1 )
+      {
+        errorFeed->save("REBOOT: BMP180 error");
+      }
+      if ( TSL2561Error == 1 )
+      {
+        errorFeed->save("REBOOT: TSL2561 error");
+      }
+      if ( SDError == 1 )
+      {
+        errorFeed->save("REBOOT: SD card error");
+      }
+    }
+    
   if ( Serial );
   {
     /* We're ready to go! */
@@ -281,23 +301,6 @@ void loop()
   if ( WiFiError == 0 && IOconnERROR == 0 )
     {
       io.run();
-    }
-
-  if ( IOconnERROR == 0 && InitialErrorReport == 0 )
-    {
-      if ( BMP180Error == 1 )
-      {
-        errorFeed->save("REBOOT: BMP180 error");
-      }
-      if ( TSL2561Error == 1 )
-      {
-        errorFeed->save("REBOOT: TSL2561 error");
-      }
-      if ( SDError == 1 )
-      {
-        errorFeed->save("REBOOT: SD card error");
-      }
-      InitialErrorReport = 1;   //Only upload errors after unit resets
     }
 
   DateTime now = rtc.now();

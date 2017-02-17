@@ -18,6 +18,7 @@ Current unit configurations and tests are being documented in the [wiki](https:/
 ### Hardware To-Do
 * [x] Add SD Card adapter
 * [ ] Add soil sensor
+* [ ] Add light sensor
 * [ ] Add solar panel (February 8, 2017: ordered and en route )
 * [x] Determine method for posting data online
 * [ ] Organize circuit for project/gang box

@@ -74,7 +74,6 @@ void setup()
       Serial.print("Debug enabled");
     }
   }
-  // delay(2000); //Don't remember why I needed this. February 10, 2017 10:28
 
   Wire.begin();
 
@@ -156,9 +155,9 @@ void setup()
 
   Wire.beginTransmission(TSL2561I2CAdd);
   I2Cerror = Wire.endTransmission();
-  if (Serial)
+  if (Serial && debug == 1)
   {
-    Serial.print("Error: ");
+    Serial.print("TSL2561 I2C error: ");
     Serial.println(I2Cerror);
   }
   if ( I2Cerror != 0 )  //Error "0" indicates a successful contact
@@ -202,7 +201,7 @@ void setup()
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi

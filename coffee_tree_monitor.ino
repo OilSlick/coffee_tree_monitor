@@ -138,6 +138,13 @@ void setup()
     {
       Serial.println("No BMP180 detected ... Check your wiring or I2C address");
     }
+    ERRORLOG = SD.open("error.txt", FILE_WRITE);
+    if (ERRORLOG)
+    {
+      TimeStampSD(ERRORLOG);
+      ERRORLOG.print("BMP180 is not responding");
+      ERRORLOG.close();
+    }
     BMP180Error = 1;
   }
   

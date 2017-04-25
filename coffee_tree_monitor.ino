@@ -4,18 +4,26 @@
 #include <SD.h>                       //Needed for SD card adapter
 #include "config.h"                   //Needed for Adafruit IO
 
+//For OLED display
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define OLED_RESET 0
+Adafruit_SSD1306 display(OLED_RESET);
+
 /* I2C addresses:
 *  0x29  (41) TSL2561 Lux sensor
 *  0x68 (104) RTC
 *  0x77 (119) BMP180 Baro sensor
+*  ESP8266 mac address: 5C:CF:7F:C6:7B:BF
 */
-
-//ESP8266 mac address: 5C:CF:7F:C6:7B:BF
 
 String Statuses[] =  { "WL_IDLE_STATUS=0", "WL_NO_SSID_AVAIL=1", "WL_SCAN_COMPLETED=2", "WL_CONNECTED=3", "WL_CONNECT_FAILED=4", "WL_CONNECTION_LOST=5", "WL_DISCONNECTED=6"};
 String TimeStamp = "";                //String to contain the timestamp for log files
-const int chipSelect = 15;            //CS pin for SD card adapter
+
 const int SenorPowerPin = 2;          //Pin used to provide power to sensors
+const int chipSelect = 15;            //CS pin for SD card adapter
+const int lclvPin = 16;               //Controls the LC glass
+
 const int TSL2561I2CAdd = 41;         //I2C address of TSL2561 (found using I2C sketch)
 const int BMP180I2CAdd = 119;         //I2C address of BMP180 (found using I2C sketch)
 bool IOconnERROR = 0;                 //Track connection failures
@@ -57,6 +65,10 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
 void setup() 
 {
+  //For OLED display
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+  display.display();
+  
   wdt_enable(WDTO_4S);  //Configure watchdog timer with 4-second timeout
 
   rtc.begin();
@@ -64,6 +76,9 @@ void setup()
   //Power on sensors early in loop
   pinMode(SenorPowerPin,OUTPUT);
   digitalWrite(SenorPowerPin,HIGH);
+
+  pinMode(lclvPin,OUTPUT);
+  digitalWrite(lclvPin,LOW);
   
   Serial.begin(115200);
   if ( debug == 1)
@@ -206,10 +221,11 @@ void setup()
   
   //For RTC (must occur late in the loop)
   //Uncomment the line below to set the RTC
-  if ( Serial )
+/*  if ( Serial )
   {
-   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
+*/
 
   //Connect to WiFi
   wdt_reset();
@@ -297,6 +313,11 @@ void setup()
 
 void loop() 
 {
+  analogWrite(lclvPin,255);
+  delay(2000);
+  analogWrite(lclvPin,0);
+  delay(2000);
+  
   if ( debug == 1);
   {
     StartLoopRuntime = millis();
@@ -330,6 +351,11 @@ void loop()
       Serial.println(now.second(), DEC);
       WriteBMP180Serial();
       WriteTSL2561Serial();
+      display.setTextSize(1);
+      display.setTextColor(WHITE);
+      display.setCursor(0,0);
+      display.print(TSL2561Val);
+      
     }
       
     DATALOG = SD.open("log.txt", FILE_WRITE);
@@ -403,7 +429,6 @@ void TimeStampSD(File LogFile)  //Requires the name of the logfile to be passed,
   TimeStamp = String(theyear + "/" + themonth + "/" + theday + " " + thehour + ":" + themin + ",");
 
   LogFile.print(TimeStamp);
-
 }
 
 void Connect()

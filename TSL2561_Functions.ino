@@ -68,7 +68,8 @@ void ReadTSL2561()
 void WriteTSL2561Serial()
 {
   Serial.print("Lux:         ");
-  Serial.println(TSL2561Val);
+  Serial.print(TSL2561Val);
+  Serial.println(" Lux");
 }
 
 void WriteTSL2561SD()

@@ -28,7 +28,7 @@
 //
  
 #include <Wire.h>
-const int SenorPowerPin = 2;         //Pin used to provide power to sensors
+const int SenorPowerPin = 13;         //Pin used to provide power to sensors
  
  
 void setup()

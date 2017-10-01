@@ -1,4 +1,4 @@
-#include <Wire.h>                     //Needed for I2C 
+ #include <Wire.h>                    //Needed for I2C 
 #include <Adafruit_Sensor.h>          //Needed for both BMP180 and TSL2561
 #include <SPI.h>                      //Needed for SD card adapter
 #include <SD.h>                       //Needed for SD card adapter
@@ -14,7 +14,6 @@ Adafruit_SSD1306 display(OLED_RESET);
 *  0x29  (41) TSL2561 Lux sensor
 *  0x68 (104) RTC
 *  0x77 (119) BMP180 Baro sensor
-*  ESP8266 mac address: 5C:CF:7F:C6:7B:BF
 */
 
 String Statuses[] =  { "WL_IDLE_STATUS=0", "WL_NO_SSID_AVAIL=1", "WL_SCAN_COMPLETED=2", "WL_CONNECTED=3", "WL_CONNECT_FAILED=4", "WL_CONNECTION_LOST=5", "WL_DISCONNECTED=6"};
@@ -32,7 +31,6 @@ bool JustPrintRuntimeOnce = 0;        //Just give us one runtime reading
 float PressureVal = 0;                //Value returned by sensor
 float TSL2561Val = 0;                 //Value returned by sensor
 float TemperatureVal = 0;             //Value returned by sensor
-float AltitudeVal = 0;                //Value returned by sensor
 bool BMP180Error = 0;                 //Track sensor errors
 bool TSL2561Error = 0;                //Track sensor errors
 bool SDError = 0;                     //Track SD adapter errors
@@ -50,6 +48,7 @@ AdafruitIO_Feed *errorFeed = io.feed("Error");
 //For SD card adapter
 File DATALOG;
 File ERRORLOG;
+File LUXLOG;
 
 //For BMP180 pressure, temp, altitude sensor
 #include <Adafruit_BMP085_U.h>
@@ -222,11 +221,10 @@ void setup()
   
   //For RTC (must occur late in the loop)
   //Uncomment the line below to set the RTC
-/*  if ( Serial )
+  if ( Serial )
   {
    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
-*/
 
   //Connect to WiFi
   wdt_reset();
@@ -304,8 +302,18 @@ void setup()
         errorFeed->save("REBOOT: SD card error");
       }
     }
+
+  if ( debug == 1 )
+  {
+    LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+    if (LUXLOG )
+    {
+      LUXLOG.println("Date Time,LCLV High,LCLV Low");
+      LUXLOG.close();
+    }
+  }
     
-  if ( Serial );
+  if ( Serial )
   {
     /* We're ready to go! */
     Serial.println("Beginning data collection");
@@ -314,30 +322,65 @@ void setup()
 
 void loop() 
 {
-  if ( debug == 1);
+  DateTime now = rtc.now();
+  
+  if ( debug == 1 )
   {
     StartLoopRuntime = millis();
-    analogWrite(lclvPin,255);
+    analogWrite(lclvPin,1023);
     ReadTSL2561();
     //For OLED display
     display.clearDisplay();
-    display.setTextSize(4);
+    display.setTextSize(3);
     display.setTextColor(WHITE);
-    display.setCursor(0,0);
+    display.setCursor(10,0);
     display.print(TSL2561Val);
     display.display();    // NOTE: You _must_ call display after making any drawing commands
+    /*LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+    if (LUXLOG )
+    {
+      TimeStampSD(LUXLOG);
+      LUXLOG.print(TSL2561Val);
+      LUXLOG.print(",");
+      LUXLOG.close();
+    } */
+    delay(2000);
+
+    analogWrite(lclvPin,511);
+    ReadTSL2561();
+    //For OLED display
+    display.clearDisplay();
+    display.setTextSize(3);
+    display.setTextColor(WHITE);
+    display.setCursor(10,0);
+    display.print(TSL2561Val);
+    display.display();    // NOTE: You _must_ call display after making any drawing commands
+    /*LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+    if (LUXLOG )
+    {
+      TimeStampSD(LUXLOG);
+      LUXLOG.print(TSL2561Val);
+      LUXLOG.print(",");
+      LUXLOG.close();
+    }*/
     delay(2000);
 
     analogWrite(lclvPin,0);
     ReadTSL2561();
-    //For OLED display
+    //For OLED display 
     display.clearDisplay();
-    display.setTextSize(4);
+    display.setTextSize(3);
     display.setTextColor(WHITE);
     display.setCursor(0,0);
     display.print(TSL2561Val);
     display.display();    // NOTE: You _must_ call display after making any drawing commands
-    delay(2000);
+    /*LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+    if (LUXLOG )
+    {
+      LUXLOG.println(TSL2561Val);
+      LUXLOG.close();
+    }*/
+    //delay(2000);
   }
   
   // io.run(); keeps the client connected to
@@ -346,8 +389,6 @@ void loop()
     {
       io.run();
     }
-
-  DateTime now = rtc.now();
   
   if ( now.second() == 0 ) //Update SD log file every minute
   { 

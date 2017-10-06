@@ -226,7 +226,7 @@ void setup()
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi
@@ -322,7 +322,7 @@ void setup()
     Serial.println("Beginning data collection");
     //For OLED display
     display.clearDisplay();
-    display.setTextSize(3);
+    display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(10,0);
     display.print("Ready");
@@ -432,6 +432,15 @@ void loop()
       DisplayDuration = ThisSecond + 15;
       WriteBMP180OLED();
       WriteTSL2561OLED();
+      display.setTextSize(1); //textsize 1 = 7 px high
+      display.setTextColor(WHITE);
+      display.setCursor(50,24);
+      display.print(now.hour(), DEC);
+      display.print(":");
+      display.print(now.minute(), DEC);
+      display.print(":");
+      display.println(now.second(), DEC);
+      display.display();
     }
     DATALOG = SD.open("log.txt", FILE_WRITE);
     // if the file opened okay, write to it:

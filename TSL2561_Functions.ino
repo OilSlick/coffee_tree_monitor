@@ -83,3 +83,14 @@ void WriteTSL2561IO()
   luxFeed->save(TSL2561Val);
 }
 
+void WriteTSL2561OLED()
+{
+  display.setTextSize(1); //textsize 1 = 7 px high
+  display.setTextColor(WHITE);
+  display.setCursor(0,16);
+  display.print("Lux:      ");
+  display.print(TSL2561Val);
+  display.println(" Lux");
+  display.display();    // NOTE: You _must_ call display after making any drawing commands
+}
+

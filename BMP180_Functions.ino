@@ -65,3 +65,20 @@ void WriteBMP180IO()
   tempFeed->save(TemperatureVal);
   presFeed->save(PressureVal);
 }
+
+void WriteBMP180OLED()
+{
+  //For OLED display
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+    display.print("Press:    ");
+    display.print(PressureVal);
+    display.println(" hPa");
+    display.print("Temp:     ");
+    display.print(TemperatureVal);
+    display.println(" C");
+    display.display();    // NOTE: You _must_ call display after making any drawing commands
+}
+

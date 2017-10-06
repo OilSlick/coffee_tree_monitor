@@ -26,7 +26,7 @@ const int lclvPin = 16;               //Controls the LC glass
 const int TSL2561I2CAdd = 41;         //I2C address of TSL2561 (found using I2C sketch)
 const int BMP180I2CAdd = 119;         //I2C address of BMP180 (found using I2C sketch)
 bool IOconnERROR = 0;                 //Track connection failures
-bool debug = 1;                       //Enable debugging with "1"
+bool debug = 0;                       //Enable debugging with "1"
 bool JustPrintRuntimeOnce = 0;        //Just give us one runtime reading
 float PressureVal = 0;                //Value returned by sensor
 float TSL2561Val = 0;                 //Value returned by sensor
@@ -223,7 +223,7 @@ void setup()
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi
@@ -317,13 +317,20 @@ void setup()
   {
     /* We're ready to go! */
     Serial.println("Beginning data collection");
+    //For OLED display
+    display.clearDisplay();
+    display.setTextSize(3);
+    display.setTextColor(WHITE);
+    display.setCursor(10,0);
+    display.print("Ready");
+    display.display();    // NOTE: You _must_ call display after making any drawing commands
     }
 }
 
 void loop() 
 {
   DateTime now = rtc.now();
-  
+    
   if ( debug == 1 )
   {
     StartLoopRuntime = millis();
@@ -331,7 +338,7 @@ void loop()
     ReadTSL2561();
     //For OLED display
     display.clearDisplay();
-    display.setTextSize(3);
+    display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(10,0);
     display.print(TSL2561Val);
@@ -350,7 +357,7 @@ void loop()
     ReadTSL2561();
     //For OLED display
     display.clearDisplay();
-    display.setTextSize(3);
+    display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(10,0);
     display.print(TSL2561Val);
@@ -369,7 +376,7 @@ void loop()
     ReadTSL2561();
     //For OLED display 
     display.clearDisplay();
-    display.setTextSize(3);
+    display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0,0);
     display.print(TSL2561Val);
@@ -408,17 +415,19 @@ void loop()
       Serial.print(":");
       Serial.println(now.second(), DEC);
       WriteBMP180Serial();
+      WriteBMP180OLED();
       WriteTSL2561Serial();
+      WriteTSL2561OLED();
     }
     
     //For OLED display
-    display.clearDisplay();
-    display.setTextSize(4);
+    /*display.clearDisplay();
+    display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0,0);
     display.print(TSL2561Val);
     display.display();    // NOTE: You _must_ call display after making any drawing commands
-      
+      */
     DATALOG = SD.open("log.txt", FILE_WRITE);
     // if the file opened okay, write to it:
     if (DATALOG) 

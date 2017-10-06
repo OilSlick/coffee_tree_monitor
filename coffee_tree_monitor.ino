@@ -39,6 +39,9 @@ byte I2Cerror;                        //Track I2C errors (when pinging individua
 int StartLoopRuntime;                 //Track loop run time (enabled with "debug = 1;" above)
 int LoopRuntime;                      //Track loop run time (enabled with "debug = 1;" above)
 
+int ThisSecond = 0;                   //Used to display on OLED for short duration
+int DisplayDuration = ThisSecond + 10;  //Used to display on OLED for short duration
+
 //For Adafruit IO
 AdafruitIO_Feed *luxFeed = io.feed("Lux");
 AdafruitIO_Feed *tempFeed = io.feed("Temp");
@@ -324,6 +327,9 @@ void setup()
     display.setCursor(10,0);
     display.print("Ready");
     display.display();    // NOTE: You _must_ call display after making any drawing commands
+    delay(2500);
+    display.clearDisplay();
+    display.display();
     }
 }
 
@@ -389,7 +395,13 @@ void loop()
     }*/
     //delay(2000);
   }
-  
+
+  //Clear display after 15s
+    if ( now.second() >= DisplayDuration )
+    {
+      display.clearDisplay();
+      display.display();
+    }
   // io.run(); keeps the client connected to
   // io.adafruit.com, and processes any incoming data.
   if ( WiFiError == 0 && IOconnERROR == 0 )
@@ -415,19 +427,12 @@ void loop()
       Serial.print(":");
       Serial.println(now.second(), DEC);
       WriteBMP180Serial();
-      WriteBMP180OLED();
       WriteTSL2561Serial();
+      ThisSecond = now.second();
+      DisplayDuration = ThisSecond + 15;
+      WriteBMP180OLED();
       WriteTSL2561OLED();
     }
-    
-    //For OLED display
-    /*display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setCursor(0,0);
-    display.print(TSL2561Val);
-    display.display();    // NOTE: You _must_ call display after making any drawing commands
-      */
     DATALOG = SD.open("log.txt", FILE_WRITE);
     // if the file opened okay, write to it:
     if (DATALOG) 

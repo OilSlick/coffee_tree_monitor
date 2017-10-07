@@ -28,6 +28,8 @@ const int BMP180I2CAdd = 119;         //I2C address of BMP180 (found using I2C s
 bool IOconnERROR = 0;                 //Track connection failures
 bool debug = 0;                       //Enable debugging with "1"
 bool JustPrintRuntimeOnce = 0;        //Just give us one runtime reading
+bool LCLVactive = 0;                  //Track if LCLV is on or off
+int LCLVValue = 0;                    //Track LCLV value
 float PressureVal = 0;                //Value returned by sensor
 float TSL2561Val = 0;                 //Value returned by sensor
 float TemperatureVal = 0;             //Value returned by sensor
@@ -411,6 +413,12 @@ void loop()
   
   if ( now.second() == 0 ) //Update SD log file every minute
   { 
+    if ( LCLVactive == 1 )
+    {
+      //shut off LCLV to get good read on LUX
+      analogWrite(lclvPin,0);
+      LCLVactive = 0;
+    }
     if ( BMP180Error == 0 )
     {
       ReadBMP180();
@@ -419,6 +427,17 @@ void loop()
     {
       ReadTSL2561();
     }
+    // If lux is nearing saturation, utlize LCLV and take a new reading
+    if ( TSL2561Val >= 10000 ) 
+    {
+      LCLVValue = 859;  //LCLV at 859; 84% of 3v which is 50% at 5v, the voltage of LCLV
+      analogWrite(lclvPin,LCLVValue); 
+      LCLVactive = 1;
+      ReadTSL2561();
+      analogWrite(lclvPin,0); //Turn off LCLV to save juice
+      LCLVactive = 0;
+    }
+    
     if ( Serial )
     {
       Serial.print(now.hour(), DEC);

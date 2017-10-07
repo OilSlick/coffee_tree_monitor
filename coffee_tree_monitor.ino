@@ -1,4 +1,4 @@
- #include <Wire.h>                    //Needed for I2C 
+#include <Wire.h>                     //Needed for I2C 
 #include <Adafruit_Sensor.h>          //Needed for both BMP180 and TSL2561
 #include <SPI.h>                      //Needed for SD card adapter
 #include <SD.h>                       //Needed for SD card adapter
@@ -308,15 +308,12 @@ void setup()
       }
     }
 
-  if ( debug == 1 )
-  {
-    LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+  LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
     if (LUXLOG )
     {
-      LUXLOG.println("Date Time,LCLV High,LCLV Low");
+      LUXLOG.println("Date Time,LCLV Raw,LCLV Modified,LCLV Value");
       LUXLOG.close();
     }
-  }
     
   if ( Serial )
   {
@@ -427,6 +424,14 @@ void loop()
     {
       ReadTSL2561();
     }
+    LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+    if (LUXLOG )
+    {  
+      TimeStampSD(LUXLOG);
+      LUXLOG.print(TSL2561Val);
+      LUXLOG.print(",");
+      LUXLOG.close();
+    }
     // If lux is nearing saturation, utlize LCLV and take a new reading
     if ( TSL2561Val >= 10000 ) 
     {
@@ -436,8 +441,26 @@ void loop()
       ReadTSL2561();
       analogWrite(lclvPin,0); //Turn off LCLV to save juice
       LCLVactive = 0;
+      LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+      if (LUXLOG )
+      {
+        LUXLOG.print(TSL2561Val);
+        LUXLOG.print(",");
+        LUXLOG.println("LCLVValue");
+        LUXLOG.close();
+      }
     }
-    
+    else 
+    {
+      LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
+      if (LUXLOG )
+      {
+        LUXLOG.print("0");
+        LUXLOG.print(",");
+        LUXLOG.println("0");
+        LUXLOG.close();
+      }
+    }
     if ( Serial )
     {
       Serial.print(now.hour(), DEC);

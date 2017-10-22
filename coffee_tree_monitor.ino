@@ -434,7 +434,7 @@ void loop()
       LUXLOG.close();
     }
     // If lux is nearing saturation, utlize LCLV and take a new reading
-    if ( TSL2561Val >= 10000 ) 
+    if ( TSL2561Val >= 1000 ) 
     {
       LCLVValue = 859;  //LCLV at 859; 84% of 3v which is 50% at 5v, the voltage of LCLV
       analogWrite(lclvPin,LCLVValue); 

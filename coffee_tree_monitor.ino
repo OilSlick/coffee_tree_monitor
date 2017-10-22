@@ -12,6 +12,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 /* I2C addresses:
 *  0x29  (41) TSL2561 Lux sensor
+*  0x3C       OLED Display
 *  0x68 (104) RTC
 *  0x77 (119) BMP180 Baro sensor
 */
@@ -21,7 +22,7 @@ String TimeStamp = "";                //String to contain the timestamp for log 
 
 const int SenorPowerPin = 2;          //Pin used to provide power to sensors
 const int chipSelect = 15;            //CS pin for SD card adapter
-const int lclvPin = 16;               //Controls the LC glass
+const int lclvPin = 16;               //Controls the LCLV glass
 
 const int TSL2561I2CAdd = 41;         //I2C address of TSL2561 (found using I2C sketch)
 const int BMP180I2CAdd = 119;         //I2C address of BMP180 (found using I2C sketch)
@@ -69,13 +70,13 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
 void setup() 
 {
+  wdt_enable(WDTO_4S);  //Configure watchdog timer with 4-second timeout
+  
   //For OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
   display.clearDisplay();
   display.display(); // NOTE: You _must_ call display after making any drawing commands
   
-  wdt_enable(WDTO_4S);  //Configure watchdog timer with 4-second timeout
-
   rtc.begin();
 
   //Power on sensors early in loop
@@ -228,7 +229,7 @@ void setup()
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi
@@ -446,7 +447,7 @@ void loop()
       {
         LUXLOG.print(TSL2561Val);
         LUXLOG.print(",");
-        LUXLOG.println("LCLVValue");
+        LUXLOG.println(LCLVValue);
         LUXLOG.close();
       }
     }

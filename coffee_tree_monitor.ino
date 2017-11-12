@@ -11,10 +11,10 @@
 Adafruit_SSD1306 display(OLED_RESET);
 
 /* I2C addresses:
-*  0x29  (41) TSL2561 Lux sensor
-*  0x3C       OLED Display
-*  0x68 (104) RTC
-*  0x77 (119) BMP180 Baro sensor
+   0x29  (41) TSL2561 Lux sensor
+   0x3C       OLED Display
+   0x68 (104) RTC
+   0x77 (119) BMP180 Baro sensor
 */
 
 String Statuses[] =  { "WL_IDLE_STATUS=0", "WL_NO_SSID_AVAIL=1", "WL_SCAN_COMPLETED=2", "WL_CONNECTED=3", "WL_CONNECT_FAILED=4", "WL_CONNECTION_LOST=5", "WL_DISCONNECTED=6"};
@@ -61,34 +61,34 @@ File LUXLOG;
 Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
 
 //For RTC
-#include "RTClib.h" 
+#include "RTClib.h"
 RTC_PCF8523 rtc;
 
 //For Lux sensor
 #include <Adafruit_TSL2561_U.h>
 Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 2561);
 
-void setup() 
+void setup()
 {
   wdt_enable(WDTO_4S);  //Configure watchdog timer with 4-second timeout
-  
+
   //For OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
   display.clearDisplay();
   display.display(); // NOTE: You _must_ call display after making any drawing commands
-  
+
   rtc.begin();
 
   //Power on sensors early in loop
-  pinMode(SenorPowerPin,OUTPUT);
-  digitalWrite(SenorPowerPin,HIGH);
+  pinMode(SenorPowerPin, OUTPUT);
+  digitalWrite(SenorPowerPin, HIGH);
 
-  pinMode(lclvPin,OUTPUT);
-  analogWrite(lclvPin,0);
-  
+  pinMode(lclvPin, OUTPUT);
+  analogWrite(lclvPin, 0);
+
   Serial.begin(115200);
   if ( debug == 1)
-  { 
+  {
     Serial.setDebugOutput(true);
     if ( Serial )
     {
@@ -99,9 +99,9 @@ void setup()
   Wire.begin();
 
   //For SD card adapter
-  Serial.print("Initializing SD card..."); 
+  Serial.print("Initializing SD card...");
   pinMode(SS, OUTPUT);
-   
+
   if (!SD.begin(chipSelect)) {
     Serial.println("SD card initialization failed");
     SDError = 1;
@@ -119,10 +119,10 @@ void setup()
     DATALOG.println("Date Time,Lux,Temp.C,Pressure.hPa");
     DATALOG.close();
   }
-  else 
+  else
   {
     // if the file didn't open, print an error to serial:
-    if (Serial) 
+    if (Serial)
     {
       Serial.println("Error opening data log file");
     }
@@ -135,7 +135,7 @@ void setup()
     ERRORLOG.println("Date Time,Error");
     ERRORLOG.close();
   }
-  else 
+  else
   {
     // if the file didn't open, print an error:
     if (Serial)
@@ -143,16 +143,16 @@ void setup()
       Serial.println("Error opening error log file");
     }
   }
-  
+
   //For BMP180
   if (Serial)
   {
     Serial.println("Initilizing Pressure Sensor"); Serial.println("");
   }
-  
+
   /* Initialise the sensor */
-  
-  if(!bmp.begin())
+
+  if (!bmp.begin())
   {
     /* There was a problem detecting the BMP085 ... check your connections */
     if (Serial)
@@ -168,17 +168,17 @@ void setup()
     }
     BMP180Error = 1;
   }
-  
+
   /* Display some basic information on this sensor */
   displayBMP180SensorDetails();
 
   //For TSL2561 sensor
-  
+
   if (Serial)
   {
     Serial.println("Initilizing Light Sensor"); Serial.println("");
   }
-  
+
   /* Initialise the sensor */
 
   Wire.beginTransmission(TSL2561I2CAdd);
@@ -208,8 +208,8 @@ void setup()
       TSL2561Error = 1;
     }
   }
-  
-  if(!tsl.begin())
+
+  if (!tsl.begin())
   {
     /* There was a problem detecting the TSL2561 ... check your connections */
     if (Serial)
@@ -218,23 +218,23 @@ void setup()
     }
     TSL2561Error = 1;
   }
-  
+
   /* Display some basic information on this sensor */
   displayTSL2561SensorDetails();
-  
+
   /* Setup the sensor gain and integration time */
   configureSensor();
-  
+
   //For RTC (must occur late in the loop)
   //Uncomment the line below to set the RTC
   if ( Serial )
   {
-   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   //Connect to WiFi
   wdt_reset();
-  Connect();  
+  Connect();
 
   //Connect to Adafruit IO
   if ( WiFiError == 0)
@@ -248,10 +248,10 @@ void setup()
     tempFeed->onMessage(handleMessage);
     presFeed->onMessage(handleMessage);
     errorFeed->onMessage(handleMessage);
-  
+
     // wait for a connection
     int IOconnAttempt = 0;
-    while(io.status() < AIO_CONNECTED && IOconnAttempt <= 60) 
+    while (io.status() < AIO_CONNECTED && IOconnAttempt <= 60)
     {
       Serial.print(".");
       delay(500);
@@ -277,12 +277,12 @@ void setup()
     }
     IOconnAttempt = 0;
 
-      // we are connected
-      if ( Serial );
-      {
-        Serial.println();
-        Serial.println(io.statusText());
-      }
+    // we are connected
+    if ( Serial );
+    {
+      Serial.println();
+      Serial.println(io.statusText());
+    }
   }
   if ( IOconnERROR == 0 && WiFiError == 0 && TSL2561Error == 0 && BMP180Error == 0 && SDError == 0 )
   {
@@ -294,28 +294,28 @@ void setup()
   }
 
   if ( IOconnERROR == 0 )
+  {
+    if ( BMP180Error == 1 )
     {
-      if ( BMP180Error == 1 )
-      {
-        errorFeed->save("REBOOT: BMP180 error");
-      }
-      if ( TSL2561Error == 1 )
-      {
-        errorFeed->save("REBOOT: TSL2561 error");
-      }
-      if ( SDError == 1 )
-      {
-        errorFeed->save("REBOOT: SD card error");
-      }
+      errorFeed->save("REBOOT: BMP180 error");
     }
+    if ( TSL2561Error == 1 )
+    {
+      errorFeed->save("REBOOT: TSL2561 error");
+    }
+    if ( SDError == 1 )
+    {
+      errorFeed->save("REBOOT: SD card error");
+    }
+  }
 
   LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
-    if (LUXLOG )
-    {
-      LUXLOG.println("Date Time,LCLV Raw,LCLV Modified,LCLV Value");
-      LUXLOG.close();
-    }
-    
+  if (LUXLOG )
+  {
+    LUXLOG.println("Date Time,LCLV Raw,LCLV Modified,LCLV Value");
+    LUXLOG.close();
+  }
+
   if ( Serial )
   {
     /* We're ready to go! */
@@ -324,97 +324,97 @@ void setup()
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(10,0);
+    display.setCursor(10, 0);
     display.print("Ready");
     display.display();    // NOTE: You _must_ call display after making any drawing commands
     delay(2500);
     display.clearDisplay();
     display.display();
-    }
+  }
 }
 
-void loop() 
+void loop()
 {
   DateTime now = rtc.now();
-    
+
   if ( debug == 1 )
   {
     StartLoopRuntime = millis();
-    analogWrite(lclvPin,1023);
+    analogWrite(lclvPin, 1023);
     ReadTSL2561();
     //For OLED display
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(10,0);
+    display.setCursor(10, 0);
     display.print(TSL2561Val);
     display.display();    // NOTE: You _must_ call display after making any drawing commands
     /*LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
-    if (LUXLOG )
-    {
+      if (LUXLOG )
+      {
       TimeStampSD(LUXLOG);
       LUXLOG.print(TSL2561Val);
       LUXLOG.print(",");
       LUXLOG.close();
-    } */
+      } */
     delay(2000);
 
-    analogWrite(lclvPin,511);
+    analogWrite(lclvPin, 511);
     ReadTSL2561();
     //For OLED display
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(10,0);
+    display.setCursor(10, 0);
     display.print(TSL2561Val);
     display.display();    // NOTE: You _must_ call display after making any drawing commands
     /*LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
-    if (LUXLOG )
-    {
+      if (LUXLOG )
+      {
       TimeStampSD(LUXLOG);
       LUXLOG.print(TSL2561Val);
       LUXLOG.print(",");
       LUXLOG.close();
-    }*/
+      }*/
     delay(2000);
 
-    analogWrite(lclvPin,0);
+    analogWrite(lclvPin, 0);
     ReadTSL2561();
-    //For OLED display 
+    //For OLED display
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.setCursor(0,0);
+    display.setCursor(0, 0);
     display.print(TSL2561Val);
     display.display();    // NOTE: You _must_ call display after making any drawing commands
     /*LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
-    if (LUXLOG )
-    {
+      if (LUXLOG )
+      {
       LUXLOG.println(TSL2561Val);
       LUXLOG.close();
-    }*/
+      }*/
     //delay(2000);
   }
 
   //Clear display after 15s
-    if ( now.second() >= DisplayDuration )
-    {
-      display.clearDisplay();
-      display.display();
-    }
+  if ( now.second() >= DisplayDuration )
+  {
+    display.clearDisplay();
+    display.display();
+  }
   // io.run(); keeps the client connected to
   // io.adafruit.com, and processes any incoming data.
   if ( WiFiError == 0 && IOconnERROR == 0 )
-    {
-      io.run();
-    }
-  
+  {
+    io.run();
+  }
+
   if ( now.second() == 0 ) //Update SD log file every minute
-  { 
+  {
     if ( LCLVactive == 1 )
     {
       //shut off LCLV to get good read on LUX
-      analogWrite(lclvPin,0);
+      analogWrite(lclvPin, 0);
       LCLVactive = 0;
     }
     if ( BMP180Error == 0 )
@@ -427,20 +427,20 @@ void loop()
     }
     LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
     if (LUXLOG )
-    {  
+    {
       TimeStampSD(LUXLOG);
       LUXLOG.print(TSL2561Val);
       LUXLOG.print(",");
       LUXLOG.close();
     }
     // If lux is nearing saturation, utlize LCLV and take a new reading
-    if ( TSL2561Val >= 1000 ) 
+    if ( TSL2561Val >= 10000 )
     {
       LCLVValue = 859;  //LCLV at 859; 84% of 3v which is 50% at 5v, the voltage of LCLV
-      analogWrite(lclvPin,LCLVValue); 
+      analogWrite(lclvPin, LCLVValue);
       LCLVactive = 1;
       ReadTSL2561();
-      analogWrite(lclvPin,0); //Turn off LCLV to save juice
+      analogWrite(lclvPin, 0); //Turn off LCLV to save juice
       LCLVactive = 0;
       LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
       if (LUXLOG )
@@ -451,7 +451,7 @@ void loop()
         LUXLOG.close();
       }
     }
-    else 
+    else
     {
       LUXLOG = SD.open("luxlog.txt", FILE_WRITE);
       if (LUXLOG )
@@ -477,7 +477,7 @@ void loop()
       WriteTSL2561OLED();
       display.setTextSize(1); //textsize 1 = 7 px high
       display.setTextColor(WHITE);
-      display.setCursor(50,24);
+      display.setCursor(50, 24);
       display.print(now.hour(), DEC);
       display.print(":");
       display.print(now.minute(), DEC);
@@ -487,9 +487,9 @@ void loop()
     }
     DATALOG = SD.open("log.txt", FILE_WRITE);
     // if the file opened okay, write to it:
-    if (DATALOG) 
+    if (DATALOG)
     {
-      TimeStampSD(DATALOG); 
+      TimeStampSD(DATALOG);
       if ( TSL2561Error == 0 )
       {
         WriteTSL2561SD();
@@ -499,9 +499,9 @@ void loop()
         WriteBMP180SD();
       }
       DATALOG.println();
-      DATALOG.close();     
-    } 
-    else 
+      DATALOG.close();
+    }
+    else
     {
       // if the file didn't open, print an error:
       Serial.println("error opening log file");
@@ -519,7 +519,7 @@ void loop()
         WriteTSL2561IO();
       }
     }
-    else 
+    else
     {
       if ( Serial )
       {
@@ -536,7 +536,7 @@ void loop()
       Serial.print("Loop runtime: "); Serial.print(LoopRuntime); Serial.println(" ms");
       JustPrintRuntimeOnce = 1;
     }
-    else 
+    else
     {
       JustPrintRuntimeOnce == 0;
     }
@@ -546,7 +546,7 @@ void loop()
 void TimeStampSD(File LogFile)  //Requires the name of the logfile to be passed, i.e. TimeStampSD(ERRORLOG);
 {
   DateTime now = rtc.now();
-  
+
   String theyear = String(now.year(), DEC);
   String themonth = String(now.month(), DEC);
   String theday = String(now.day(), DEC);
@@ -562,45 +562,45 @@ void Connect()
 {
   if ( WiFiError == 0 )
   {
-  if (Serial)
-  {
-    Serial.print("Connecting to ");
-    Serial.println(WIFI_SSID);
-  }
-  
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-    int Attempt = 0;
-    while (WiFi.status() != WL_CONNECTED) 
+    if (Serial)
     {
-      delay(500);
-      Attempt++;
-      Serial.print(".");
-      if (Attempt == 60)
-      {
-        if (Serial)
-        {
-          Serial.println();
-          Serial.println("WiFi connection failed");
-          }
-        ERRORLOG = SD.open("error.txt", FILE_WRITE);
-        if (ERRORLOG)
-        {
-          TimeStampSD(ERRORLOG);
-          ERRORLOG.println("WiFi connection failed");
-          ERRORLOG.close();
-        }
-        WiFiError = 1;
-        IOconnERROR = 1; //If no WiFi connection, prevent connection to Adafruit IO
-        return;
-       }
+      Serial.print("Connecting to ");
+      Serial.println(WIFI_SSID);
     }
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      WiFi.begin(WIFI_SSID, WIFI_PASS);
+      int Attempt = 0;
+      while (WiFi.status() != WL_CONNECTED)
+      {
+        delay(500);
+        Attempt++;
+        Serial.print(".");
+        if (Attempt == 60)
+        {
+          if (Serial)
+          {
+            Serial.println();
+            Serial.println("WiFi connection failed");
+          }
+          ERRORLOG = SD.open("error.txt", FILE_WRITE);
+          if (ERRORLOG)
+          {
+            TimeStampSD(ERRORLOG);
+            ERRORLOG.println("WiFi connection failed");
+            ERRORLOG.close();
+          }
+          WiFiError = 1;
+          IOconnERROR = 1; //If no WiFi connection, prevent connection to Adafruit IO
+          return;
+        }
+      }
+    }
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
   }
 }
 
